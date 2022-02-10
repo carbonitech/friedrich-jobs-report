@@ -191,21 +191,22 @@ def format_to_html_summary(df: pandas.DataFrame) -> str:
     a custom summary format in an HTML string
     """
     project_col_names = ['Rep Name','Project Name','Project City',
-            'Project State','Quote Name','Create Date']
+            'Project State','Quote Name','Create Date', 'Quote Status']
 
     all_projects = df.loc[:,project_col_names].drop_duplicates().to_dict(orient='index')
     
-    all_projects_dict = {tuple(value.values()):[] for value in all_projects.values()}
+    all_projects_dict = [tuple(value.values()) for value in all_projects.values()]
 
     result = ""
 
     for project in all_projects_dict:
-        customer, proj_name, city, state, quote, date = project
+        customer, proj_name, city, state, quote, date, status = project
         project_html = f"<hr><h3>Customer: <span style=\"font-weight: lighter\">{customer}</span>\n \
                 <h3>Project Location: <span style=\"font-weight: lighter\">{city}, {state}</span>\n \
                 <h3>Name: <span style=\"font-weight: lighter\">{proj_name}</span>\n \
                 <h3>Quote Name: <span style=\"font-weight: lighter\">{quote}</span>\n \
-                <h3>Date Created: <span style=\"font-weight: lighter\">{date}</span>"
+                <h3>Date Created: <span style=\"font-weight: lighter\">{date}</span> \
+                <h3>Status: <span style=\"font-weight: lighter\">{status}</span>"
         records = df.loc[
             (df['Rep Name'] == customer)
             & (df['Project Name'] == proj_name)
