@@ -1,5 +1,6 @@
-from flask import Blueprint, Response
+import traceback
 
+from flask import Blueprint, Response
 from application import utils, emailHelper
 
 tasks = Blueprint('tasks', __name__) 
@@ -18,4 +19,11 @@ def check_quotes():
                 )
         return Response(None,200)
     except Exception as e:
+        emailHelper.send_email(
+            'jcarboni@shupecarboni.com',
+            "Error in friedrich-jobs-report",
+            "Traceback",
+            traceback.format_exc(),
+            ""
+            )
         return Response(None,500)
