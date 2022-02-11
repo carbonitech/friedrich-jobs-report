@@ -14,7 +14,7 @@ os.chdir(os.path.dirname(__file__))
 BASE_URL = os.environ.get('FRIEDRICH_PORTAL_URL')
 USERNAME = os.environ.get('FRIEDRICH_PORTAL_USERNAME')
 PASSWORD = os.environ.get('FRIEDRICH_PORTAL_PASS')
-DATABASE = './recent_data.db'
+DATABASE = os.environ.get('DATABASE_URL')
 
 
 def fetch_approved_quotes_from_website() -> bytes:
@@ -108,21 +108,13 @@ def append_hashid_col(data: pandas.DataFrame) -> pandas.DataFrame:
     return new_df
 
 
-def save_to_database(data: pandas.DataFrame):
-
-    with sqlite3.Connection(DATABASE) as conn:
-        data.to_sql('data', conn, if_exists='replace', index=False)
-
-
 def compare_tables(new_table: pandas.DataFrame) -> pandas.DataFrame:
 
     new_table_cp = new_table.copy()
     output_columns = new_table_cp.columns.tolist()
     output_columns.remove("hashid")
 
-    with sqlite3.Connection(DATABASE) as conn:
-        old_table = pandas.read_sql('SELECT * FROM data', conn)
-
+    old_table = get_saved_data()
 
     new_table_cp.set_index('hashid', inplace=True)
     old_table.set_index('hashid', inplace=True)
@@ -153,7 +145,6 @@ def compare_tables(new_table: pandas.DataFrame) -> pandas.DataFrame:
     right_not_left.set_axis(right_join_columns_fixed, axis=1, inplace=True)
 
     # return dict of results
-
     differences = {}
     added = left_not_right.loc[:,output_columns]
     removed = right_not_left.loc[:,output_columns]
@@ -166,10 +157,17 @@ def compare_tables(new_table: pandas.DataFrame) -> pandas.DataFrame:
     return differences
 
 
+def save_to_database(data: pandas.DataFrame):
+
+    with sqlite3.Connection(DATABASE) as conn:
+        data.to_sql('data', conn, if_exists='replace', index=False)
+
+
 def get_saved_data() -> pandas.DataFrame:
 
     with sqlite3.Connection(DATABASE) as conn:
         return pandas.read_sql('SELECT * FROM data', conn)
+
 
 def run_quote_check():
 
@@ -177,9 +175,13 @@ def run_quote_check():
     new_table = append_hashid_col(new_table)
 
     if os.path.exists(DATABASE):
-        diffs = compare_tables(new_table)
-        save_to_database(new_table)
-        return diffs
+        if get_saved_data().empty:
+            save_to_database(new_table)
+            return
+        else:
+            diffs = compare_tables(new_table)
+            save_to_database(new_table)
+            return diffs
     else:
         save_to_database(new_table)
         return

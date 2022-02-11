@@ -17,5 +17,5 @@ def check_quotes():
                 ""
                 )
         return Response(None,200)
-    except Exception:
+    except Exception as e:
         return Response(None,500)
