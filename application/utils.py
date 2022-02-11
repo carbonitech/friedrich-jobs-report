@@ -16,7 +16,9 @@ USERNAME = os.environ.get('FRIEDRICH_PORTAL_USERNAME')
 PASSWORD = os.environ.get('FRIEDRICH_PORTAL_PASS')
 DATABASE = os.environ.get('DATABASE_URL')
 
-engine = sqlalchemy.create_engine(DATABASE)
+
+
+engine = sqlalchemy.create_engine(DATABASE.replace("postgres://","postgresql://"))
 
 
 def fetch_approved_quotes_from_website() -> bytes:
