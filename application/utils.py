@@ -1,7 +1,7 @@
 import os
 import math
 import random
-import sqlite3
+import sqlalchemy
 from io import BytesIO
 from hashlib import sha256
 
@@ -15,6 +15,8 @@ BASE_URL = os.environ.get('FRIEDRICH_PORTAL_URL')
 USERNAME = os.environ.get('FRIEDRICH_PORTAL_USERNAME')
 PASSWORD = os.environ.get('FRIEDRICH_PORTAL_PASS')
 DATABASE = os.environ.get('DATABASE_URL')
+
+engine = sqlalchemy.create_engine(DATABASE)
 
 
 def fetch_approved_quotes_from_website() -> bytes:
@@ -159,14 +161,16 @@ def compare_tables(new_table: pandas.DataFrame) -> pandas.DataFrame:
 
 def save_to_database(data: pandas.DataFrame):
 
-    with sqlite3.Connection(DATABASE) as conn:
+    with engine.connect() as conn:
         data.to_sql('data', conn, if_exists='replace', index=False)
+    return
 
 
 def get_saved_data() -> pandas.DataFrame:
 
-    with sqlite3.Connection(DATABASE) as conn:
-        return pandas.read_sql('SELECT * FROM data', conn)
+    with engine.connect() as conn:
+        result = pandas.read_sql('SELECT * FROM data', conn)
+    return result
 
 
 def run_quote_check():
@@ -174,17 +178,13 @@ def run_quote_check():
     new_table = get_data()
     new_table = append_hashid_col(new_table)
 
-    if os.path.exists(DATABASE):
-        if get_saved_data().empty:
-            save_to_database(new_table)
-            return
-        else:
-            diffs = compare_tables(new_table)
-            save_to_database(new_table)
-            return diffs
-    else:
+    if get_saved_data().empty:
         save_to_database(new_table)
-        return
+        return {}
+    else:
+        diffs = compare_tables(new_table)
+        save_to_database(new_table)
+        return diffs
 
 
 def format_to_html_summary(df: pandas.DataFrame) -> str:
