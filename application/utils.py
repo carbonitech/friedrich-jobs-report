@@ -15,8 +15,7 @@ BASE_URL = os.environ.get('FRIEDRICH_PORTAL_URL')
 USERNAME = os.environ.get('FRIEDRICH_PORTAL_USERNAME')
 PASSWORD = os.environ.get('FRIEDRICH_PORTAL_PASS')
 DATABASE = os.environ.get('DATABASE_URL')
-
-
+TABLE_NAME = 'data'
 
 engine = sqlalchemy.create_engine(DATABASE.replace("postgres://","postgresql://"))
 
@@ -171,7 +170,20 @@ def save_to_database(data: pandas.DataFrame):
 def get_saved_data() -> pandas.DataFrame:
 
     with engine.connect() as conn:
-        result = pandas.read_sql('SELECT * FROM data', conn)
+        db_tables = conn.execute("""
+            "SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            ORDER BY table_name;"
+        """).fetchall()
+
+        db_tables_namelist = [tab[0] for tab in db_tables]
+
+        if TABLE_NAME in db_tables_namelist:
+            result = pandas.read_sql(f'SELECT * FROM {TABLE_NAME}', conn)
+        else:
+            result = pandas.DataFrame()
+    
     return result
 
 
