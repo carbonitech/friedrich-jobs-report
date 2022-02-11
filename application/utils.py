@@ -163,7 +163,7 @@ def compare_tables(new_table: pandas.DataFrame) -> pandas.DataFrame:
 def save_to_database(data: pandas.DataFrame):
 
     with engine.connect() as conn:
-        data.to_sql('data', conn, if_exists='replace', index=False)
+        data.to_sql(TABLE_NAME, conn, if_exists='replace', index=False)
     return
 
 
