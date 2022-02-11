@@ -171,10 +171,10 @@ def get_saved_data() -> pandas.DataFrame:
 
     with engine.connect() as conn:
         db_tables = conn.execute("""
-            "SELECT table_name 
+            SELECT table_name 
             FROM information_schema.tables 
             WHERE table_schema = 'public' 
-            ORDER BY table_name;"
+            ORDER BY table_name;
         """).fetchall()
 
         db_tables_namelist = [tab[0] for tab in db_tables]
