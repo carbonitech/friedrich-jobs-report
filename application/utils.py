@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import os
 import math
 import random
@@ -18,7 +19,6 @@ DATABASE = os.environ.get('DATABASE_URL')
 TABLE_NAME = 'data'
 
 engine = sqlalchemy.create_engine(DATABASE.replace("postgres://","postgresql://"))
-
 
 def fetch_approved_quotes_from_website() -> bytes:
     """
@@ -53,12 +53,10 @@ def fetch_approved_quotes_from_website() -> bytes:
         response = session.get(quotes_request)
 
         # request file
-        soup = BeautifulSoup(response.text, "html.parser")
-        onclick_url = soup.find('div').find('div')['onclick'] 
-        begin = onclick_url.index("(")+2
-        end = onclick_url.index(',')-1
-        sub_url = onclick_url[begin:end]
-        file_request = f"{BASE_URL}/{sub_url}"
+        stop_date = datetime.today().date()
+        start_date = stop_date - timedelta(weeks=3*52)
+
+        file_request = f"{BASE_URL}\DatabaseQuoteExportsBySalesRep.aspx?UserContactID=49&StartDate={datetime.strftime(start_date, '%m/%d/%Y')}&StopDate={datetime.strftime(stop_date, '%m/%d/%Y')}&ContactID={contact_id}"
         file_response = session.get(file_request)
         file_content = file_response.content
 
